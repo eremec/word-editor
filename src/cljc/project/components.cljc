@@ -5,8 +5,7 @@
 
 (defn get-slurped-xml! []
   (GET "/word-xml"
-       {:handler #(reset! slurped-xml
-                          (vec (sort-by key %)))}))
+       {:handler #(reset! slurped-xml %)}))
 
 (defn depersonalize! []
   (when-let [xml (not-empty @slurped-xml)]
@@ -64,7 +63,7 @@
 ;   (block "Submit"                                            #(submit-edit))]
 ;    (block "Open (if already uploaded)"                        #(get-slurped-xml!))]
    [:div.main
-    (for [[wp-id line] (rum/react slurped-xml)]
+    (for [[wp-id line] (sort-by key (rum/react slurped-xml))]
       (rum/with-key (line-comp line) wp-id))]])
 
 (def cur-page (atom :home))
