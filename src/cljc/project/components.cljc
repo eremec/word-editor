@@ -20,14 +20,14 @@
   (POST "/submit-edit"
         {:params {:xml @slurped-xml}}))
 
-(rum/defc sym-comp < rum/reactive [{:keys [marked? val path id]}]
+(rum/defc sym-comp < rum/reactive [{:keys [marked? val wp-id id]}]
   [:div.letter
    {:style {:background-color (if marked? "#00FF00" "#FFFFFF")
             :display "inline-block";
             :color (if (= val " ") "#FFFFFF" "#000000")}
     :on-click #(swap! slurped-xml
                       update
-                      (first path)
+                      wp-id
                       (partial mapv (fn [l]
                                       (cond-> l
                                         (= id (:id l))

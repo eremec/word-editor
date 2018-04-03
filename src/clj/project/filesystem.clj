@@ -4,6 +4,9 @@
            java.util.zip.ZipOutputStream
            java.util.zip.ZipEntry))
 
+(defn clean-dir [dir])
+
+;TODO Update with auto-creation directories
 (defn unzip-file [file]
   (let [in (io/input-stream (.getPath file))
         zs (ZipInputStream. in)]
@@ -19,6 +22,7 @@
        (filter #(.isFile %))
        (map #(.getPath %))))
 
+;TODO Wrap with macros
 (defn zip-dir [dir out]
   (let [zip (ZipOutputStream. (io/output-stream out))
         l (inc (count dir))]
