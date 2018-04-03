@@ -4,6 +4,9 @@
             [clojure.xml :as xml]
             [clojure.zip :as z]))
 
+(defn get-root [path]
+  (z/xml-zip (xml/parse path)))
+
 (defn update-map [m f]
   (reduce-kv (fn [m k v] (assoc m k (f v))) {} m))
 
@@ -54,54 +57,62 @@
                             (conj (z/node left-wp))
                             (drop-last))))
          (index-text)
-         (group-by :wp-id)))
+         (group-by :wp-id))))
 
-
-  (defn assoc-text [wp-id wt-id]
-    (->> (get @data wp-id)
-         (drop-while #(not (= wt-id (:wt-id %))))
-         (take-while #(= wt-id (:wt-id %)))
-         (map :val)
-         (apply str)
-         (vector)))
-
-  (defn update-wt [{:keys [loc wp-id wt-id]}]
-    (-> (go-to-tag :w:t z/next loc)
-        (z/edit #(assoc % :content (assoc-text wp-id wt-id)))
-        ((fn [loc] {:loc   loc
-                    :wp-id wp-id
-                    :wt-id (inc wt-id)}))))
-
-  (defn update-wp [{:keys [loc wp-id]}]
-    (let [wp (go-to-tag :w:p z/next loc)
-          wt-count (count (get-by-tag-nested (z/node wp) :w:t))]
-      (->> {:loc   wp
-            :wp-id wp-id
-            :wt-id 0}
-           (iterate update-wt)
-           (take (inc wt-count))
-           (last)
-           (#(update % :wp-id inc)))))
-
-  (defn update-xml [root]
-    (let [wp-count (->> root
-                        (go-to-tag :w:p z/next)
-                        (z/rights)
-                        (count))]
-      (->> {:loc root :wp-id 0}
-           (iterate update-wp)
-           (take (inc wp-count))
-           (last)
-           :loc))))
 
 ; Xml collect
 
+(defn assoc-text [data wp-id wt-id]
+  (->> (get data wp-id)
+       (drop-while #(not (= wt-id (:wt-id %))))
+       (take-while #(= wt-id (:wt-id %)))
+       (map #(if (:marked? %) "" (:val %)))
+       (apply str)
+       (vector)))
+
+(defn update-wt [data {:keys [loc wp-id wt-id]}]
+  (-> (go-to-tag :w:t z/next loc)
+      (z/edit #(assoc % :content (assoc-text data wp-id wt-id)))
+      ((fn [loc] {:loc   loc
+                  :wp-id wp-id
+                  :wt-id (inc wt-id)}))))
+
+(defn update-wp [data {:keys [loc wp-id]}]
+  (let [wp (go-to-tag :w:p z/next loc)
+        wt-count (count (get-by-tag-nested (z/node wp) :w:t))]
+    (->> {:loc   wp
+          :wp-id wp-id
+          :wt-id 0}
+         (iterate (partial update-wt data))
+         (take (inc wt-count))
+         (last)
+         (#(update % :wp-id inc)))))
+
+(defn update-xml [data root]
+  (let [wp-count (->> root
+                      (go-to-tag :w:p z/next)
+                      (z/rights)
+                      (count))]
+    (->> {:loc root :wp-id 0}
+         (iterate (partial update-wp data))
+         (take (inc wp-count))
+         (last)
+         :loc
+         (z/root)
+         (xml/emit)
+         (with-out-str))))
+
 (comment
   (def docx (xml/parse "word_out/word/document.xml"))
+  (def normal-docx (xml/parse "document.xml"))
   (def root (z/xml-zip docx))
-  (def data (atom (-> (take-indexed-content
-                        "word_out/word/document.xml")
-                      (assoc-in [0 0 :val] \B)
-                      (assoc-in [1 0 :val] \R)
-                      (assoc-in [2 0 :val] \R))))
+  (def data (-> (take-indexed-content
+                  "word_out/word/document.xml")
+                (assoc-in [0 1 :marked?] true)
+                (assoc-in [0 2 :marked?] true)
+                (assoc-in [1 0 :val] \R)
+                (assoc-in [2 0 :val] \R)))
+  (def result (with-out-str (xml/emit normal-docx)))
+  (spit "document_restored.xml" result)
+  (def wp0 (update-wp data {:loc root :wp-id 0})))
 

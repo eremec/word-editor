@@ -7,7 +7,7 @@
             [project.middleware :refer [wrap-home wrap-base]]
             [project.components :as html]
             [project.xml-edit :as xml]
-            [project.xml-handler :refer [take-indexed-content update-map update-line]]
+            [project.xml-handler :refer [take-indexed-content update-map update-line update-xml get-root]]
             [project.filesystem  :refer [unzip-file zip-dir]]))
 
 (defn page [component]
@@ -45,9 +45,12 @@
       (ok)))
 
 (defn submit [{:keys [params]}]
-  (spit "word_out/word/document.xml" (:xml params))
-  (zip-dir "word_out" "edited.docx")
-  (ok {:status :saved}))
+  (println (:xml params))
+  (let [root (get-root "word_out/word/document.xml")
+        updated (update-xml (:xml params) root)]
+    (spit "word_out/word/document.xml" updated)
+    (zip-dir "word_out" "edited.docx")
+    (ok {:status :saved})))
 
 (defroutes home-routes
   (GET "/" [] (page html/board))

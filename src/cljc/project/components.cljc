@@ -60,7 +60,7 @@
     (block "Delete highlights (not possible save changes yet)" #(depersonalize!))
 ;    (block "Revert"                                            #(get-slurped-xml!))
     [:div#download]]
-;   (block "Submit"                                            #(submit-edit))]
+   (block "Submit"                                            #(submit-edit))
 ;    (block "Open (if already uploaded)"                        #(get-slurped-xml!))]
    [:div.main
     (for [[wp-id line] (sort-by key (rum/react slurped-xml))]
