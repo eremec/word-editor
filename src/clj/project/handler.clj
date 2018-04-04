@@ -8,6 +8,7 @@
             [project.components :as html]
             [project.xml-edit :as xml]
             [project.xml-handler :refer [take-indexed-content update-map update-line update-xml get-root]]
+            [ring.middleware.json :refer [wrap-json-response]]
             [project.filesystem  :refer [unzip-file zip-dir]]))
 
 (defn page [component]
@@ -34,7 +35,7 @@
        (rum/render-static-markup page)))
 
 (defn save-file! [{:keys [params]}]
-  (let [{:keys [filename tempfile content-type]} (:upload-file params)]
+  (let [{:keys [tempfile]} (:upload-file params)]
     (unzip-file tempfile)
     (ok {:status :ok})))
 
@@ -56,7 +57,12 @@
   (GET "/" [] (page html/board))
   (GET "/board" [] (page html/board))
   (GET "/edited.docx" [] (file-response "edited.docx"))
-  (GET "/word-xml" [] (ok (take-indexed-content "word_out/word/document.xml")))
+  (GET "/word-xml" []
+       (wrap-json-response
+        (fn [req]
+          {:status 200
+           :headers {"content-type" "application/json"}
+           :body (take-indexed-content "word_out/word/document.xml")})))
 
   (POST "/upload" req (save-file! req))
   (POST "/depersonalized" req (depersonalize req))

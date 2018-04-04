@@ -12,6 +12,7 @@
                  [org.clojure/clojurescript "1.10.126" :scope "provided"]
                  [cljs-ajax                 "0.7.3"]
                  [ring/ring-defaults        "0.3.1"]
+                 [ring/ring-json            "0.4.0"]
                  [ring-middleware-format    "0.7.2"]
                  [ring-webjars "0.2.0"]
                  [metosin/ring-http-response "0.9.0"]

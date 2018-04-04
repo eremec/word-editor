@@ -11,3 +11,7 @@ pom.xml.asc
 .lein-plugins/
 .lein-failures
 .nrepl-port
+word_out/
+.DS_Store
+figwheel_server.log
+tmp.xml

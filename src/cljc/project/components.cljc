@@ -40,14 +40,20 @@
              :color "#FFFFFF"}}
     "______"])
 
-(rum/defc line-comp < rum/reactive [line]
+(defn log [obj]
+  #?(:cljs (js/console.log obj)))
+
+(rum/defc text < rum/static [text]
+  [:span.text text])
+
+(rum/defc paragraph < rum/reactive [items]
   [:div.line
    {:style {:padding "5px"
             :padding-left "20px"
             :padding-right "20px"}}
-   (space)
-   (for [s line]
-     (rum/with-key (sym-comp s) (:id s)))])
+   [:div.paragraph
+    (for [{wtid "wtid" t "text"} items]
+      (rum/with-key (text t) wtid))]])
 
 (rum/defc block < rum/static [text f]
   [:div.block
@@ -63,8 +69,8 @@
    (block "Submit"                                            #(submit-edit))
 ;    (block "Open (if already uploaded)"                        #(get-slurped-xml!))]
    [:div.main
-    (for [[wp-id line] (sort-by key (rum/react slurped-xml))]
-      (rum/with-key (line-comp line) wp-id))]])
+    (for [[wpid items] (group-by (fn [v] (get v "wpid")) (rum/react slurped-xml))]
+      (rum/with-key (paragraph items) wpid))]])
 
 (def cur-page (atom :home))
 

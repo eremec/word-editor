@@ -6,14 +6,22 @@
 
 (defn clean-dir [dir])
 
+(defn delete-recursively [fname]
+  (doseq [f (reverse (file-seq (io/file fname)))]
+    (when (.exists f)
+      (io/delete-file f))))
+
 ;TODO Update with auto-creation directories
 (defn unzip-file [file]
-  (let [in (io/input-stream (.getPath file))
-        zs (ZipInputStream. in)]
-    (loop []
-      (when-let [next-entry (.getNextEntry zs)]
-        (io/copy zs (io/file (str "word_out/" (.getName next-entry))))
-        (recur)))))
+  (delete-recursively "word_out")
+  (with-open [in (io/input-stream file)]
+    (let [zs (ZipInputStream. in)]
+      (loop []
+        (when-let [entry (.getNextEntry zs)]
+          (let [file (str "word_out/" (.getName entry))]
+            (io/make-parents file)
+            (io/copy zs (io/file file))
+            (recur)))))))
 
 (defn get-dir-filenames [dir]
   (->> dir

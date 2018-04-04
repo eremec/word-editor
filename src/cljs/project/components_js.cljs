@@ -11,8 +11,7 @@
 
 (defn get-slurped-xml! []
   (GET "/word-xml"
-       {:handler #(do (reset! slurped-xml %)
-                      (.log js/console (str %)))}))
+       {:handler #(reset! slurped-xml %)}))
 
 (rum/defc upload-component < rum/static []
   [:div

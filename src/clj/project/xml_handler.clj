@@ -47,17 +47,45 @@
            (map-indexed #(take-text %1 {:wp-idx wp-idx :wt %2})
                         wts))))
 
+(defn tag? [tag node]
+  (= (:tag node) tag))
+
+(defn nodes [tag node]
+  (filter (partial tag? tag) (:content node)))
+
+(defn text? [node]
+  (> (count (nodes :w:t node)) 0))
+
 (defn take-indexed-content [doc-path]
-  (let [root (z/xml-zip (xml/parse doc-path))
-        left-wp (go-to-tag :w:p z/next root)]
-    (->> (apply
-           concat
-           (map-indexed take-indexed-wt
-                        (-> (z/rights left-wp)
-                            (conj (z/node left-wp))
-                            (drop-last))))
-         (index-text)
-         (group-by :wp-id))))
+  (let [doc (xml/parse doc-path)
+        wps (map-indexed vector (nodes :w:p (get-in doc [:content 0])))
+        wts (mapcat (fn [[wpid wnode]]
+                      (map (fn [[wtid rnode]]
+                             {:wpid wpid
+                              :wtid wtid
+                              :text (->> rnode (nodes :w:t) first :content first)})
+                           (map-indexed vector (filter text? (nodes :w:r wnode))))) wps)]
+    (vec wts)))
+
+(defn emit-element [e]
+  (if (instance? String e)
+    (print e)
+    (do
+      (print (str "<" (name (:tag e))))
+      (when (:attrs e)
+	(doseq [attr (:attrs e)]
+	  (print (str " " (name (key attr)) "='" (val attr)"'"))))
+      (if (:content e)
+	(do
+	  (print ">")
+	  (doseq [c (:content e)]
+	    (emit-element c))
+	  (print (str "</" (name (:tag e)) ">")))
+	(print "/>")))))
+
+(defn emit [x]
+  (print "<?xml version='1.0' encoding='UTF-8'?>")
+  (emit-element x))
 
 
 ; Xml collect
