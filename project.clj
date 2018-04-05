@@ -3,7 +3,7 @@
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[org.clojure/clojure       "1.9.0"]
+  :dependencies [[org.clojure/clojure "1.9.0-alpha16"]
                  [reagent                   "0.8.0-alpha2"]
                  [ring                      "1.6.3"]
                  [ring-server "0.5.0"]
@@ -19,16 +19,10 @@
                  [metosin/compojure-api "2.0.0-alpha6"]
                  [clj-time                  "0.14.2"]
                  [http-kit                  "2.2.0"]
-                 [org.clojure/java.jdbc     "0.7.5"]
-                 [honeysql                  "0.9.1"]
                  [nilenso/honeysql-postgres "0.2.3"]
-                 [org.postgresql/postgresql "42.2.1"]
                  [yogthos/config "1.1"]
                  [com.cognitect/transit-clj "0.8.300"]
-                 [bouncer "1.0.1"]
                  [com.taoensso/sente "1.12.0"]
-                 [buddy "2.0.0"]
-                 [bouncer "1.0.1"]
                  [reagent-utils "0.3.1"]
                  [venantius/accountant "0.2.4"]
                  [bidi "2.1.3"]]

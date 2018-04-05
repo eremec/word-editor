@@ -2,7 +2,8 @@
   (:require [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [clojure.xml :as xml]
-            [clojure.zip :as z]))
+            [clojure.zip :as z]
+            [clojure.java.io :as io]))
 
 (defn get-root [path]
   (z/xml-zip (xml/parse path)))
@@ -130,8 +131,57 @@
          (xml/emit)
          (with-out-str))))
 
+
+(defn index-text-xml [document]
+  (clojure.walk/prewalk
+   (fn [x] (cond-> x
+             (= (:tag x) :w:t)
+             (assoc :text-id (gensym))))
+   document))
+
+(defn get-text [d]
+  (if-let [id (and (seqable? d) (:text-id d))]
+    [(hash-map id (:content d))]
+    (if (seqable? d)
+      (reduce (fn [acc v] (concat acc (get-text v) )) [] d))))
+
+(defn underscore [s] (str/replace (or s "") #"." "_"))
+
+(defn update-xml [data document]
+  (clojure.walk/prewalk
+   (fn [x]
+     (cond-> x
+       (= (:tag x) :w:t)
+       (-> (assoc :content (or ((:text-id x) data) ["___"]))
+           (dissoc :text-id))))
+   document))
+
+(defn underscore-document [document]
+  (let [d-index (index-text-xml document)
+        text  (get-text d-index)
+        text-idx (reduce  (fn [acc [k v]] (assoc acc k v)) {}  text)
+
+        ;; User actions
+        ;;text-underscored (reduce-kv (fn [acc k v] (assoc acc k (map underscore v))) {} (first text))
+
+        ;;result (update-xml text-underscored d-index)
+
+        ]
+    (clojure.pprint/pprint text-idx)))
+
+
 (comment
-  (def docx (xml/parse "word_out/word/document.xml"))
+  (def docx  (xml/parse  "resources/word/document.xml"))
+
+  (underscore-document docx)
+
+  (clojure.pprint/pprint (update-xml {} (index-text-xml docx)))
+
+  (clojure.pprint/pprint (index-text-xml docx))
+  (def names (clojure.pprint/pprint (get-text (index-text-xml docx))))
+
+
+
   (def normal-docx (xml/parse "document.xml"))
   (def root (z/xml-zip docx))
   (def data (-> (take-indexed-content
