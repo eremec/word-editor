@@ -12,8 +12,12 @@
 
 (def document (r/atom nil))
 
-(defn text [text]
-  [:span.text text])
+(defn text [text wtid]
+  [:div.wt
+   {:on-click #(swap! document
+                      (fn [doc] (remove (fn [el] (= (get el "wtid") wtid))
+                                        doc)))}
+   [:span.text text]])
 
 (defn paragraph [items]
   [:div.line
@@ -22,7 +26,7 @@
             :padding-right "20px"}}
    [:div.paragraph
     (for [{wtid "wtid" t "text"} items]
-      ^{:key wtid} [text t])]])
+      ^{:key wtid} [text t wtid])]])
 
 (defn get-slurped-xml! []
   (GET "/word-xml"
