@@ -11,8 +11,7 @@
             [ring.middleware.json :refer [wrap-json-response]]
             [project.filesystem  :refer [unzip-file zip-dir]]))
 
-(defn page [component]
-  (str
+(def page
     "<!doctype html>
       <html>
        <head>
@@ -21,14 +20,13 @@
          <title>Rum test page</title>
        </head>
        <body>
-     <div id=app>"
-    (rum/render-html (component))
-    "</div>
+     <div id=app>
+    </div>
      <div id=file-upload>
      </div>
      <script src='/js/app.js' type='text/javascript'></script>
        </body>
-    </html>"))
+    </html>")
 
 (defn render-html []
   (str "<!DOCTYPE html>\n"
@@ -54,8 +52,8 @@
     (ok {:status :saved})))
 
 (defroutes home-routes
-  (GET "/" [] (page html/board))
-  (GET "/board" [] (page html/board))
+  (GET "/" [] page)
+  (GET "/board" [] page)
   (GET "/edited.docx" [] (file-response "edited.docx"))
   (GET "/word-xml" []
        (wrap-json-response

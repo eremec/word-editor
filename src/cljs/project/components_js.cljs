@@ -1,5 +1,6 @@
 (ns project.components-js
   (:require [rum.core :as rum]
+            [reagent.core :as r]
             [ajax.core :refer [GET POST]]
             [project.xml-edit :refer [apply-patterns slurped-xml]]
             [accountant.core :as accountant]
@@ -9,43 +10,52 @@
            goog.net.IframeIo
            goog.net.EventType))
 
+(def document (r/atom nil))
+
+(defn text [text]
+  [:span.text text])
+
+(defn paragraph [items]
+  [:div.line
+   {:style {:padding "5px"
+            :padding-left "20px"
+            :padding-right "20px"}}
+   [:div.paragraph
+    (for [{wtid "wtid" t "text"} items]
+      ^{:key wtid} [text t])]])
+
 (defn get-slurped-xml! []
   (GET "/word-xml"
-       {:handler #(reset! slurped-xml %)}))
+       {:handler #(reset! document %)}))
 
-(rum/defc upload-component < rum/static []
-  [:div
-   [:form {:id "upload-form"
-           :enc-type "multipart/form-data"
-           :method "POST"}
+(defn upload-component []
+  [:div.upload
     [:label "Upload File: "]
     [:input {:type "file"
              :name "upload-file"
-             :id "upload-file"}]]])
+             :id "upload-file"
+             :on-change (fn [event]
+                          (let [name (.-name (.-target event))
+                                file (aget (.-files (.-target event)) 0)
+                                form-data (doto
+                                              (js/FormData.)
+                                            (.append name file))]
+                            (POST "/upload" {:body form-data
+                                             :keywords? true
+                                             :handler #(do (.log js/console (str %))
+                                                           (get-slurped-xml!))})))}]])
 
-(defn cljs-ajax-upload-file [element-id]
-  (let [el (.getElementById js/document element-id)
-        name (.-name el)
-        file (aget (.-files el) 0)
-        form-data (doto
-                      (js/FormData.)
-                    (.append name file))]
-    (POST "/upload" {:body form-data
-                     :keywords? true
-                     :handler #(do (.log js/console (str %))
-                                   (get-slurped-xml!))})))
+(defn board []
+  (when-let [doc @document]
+    [:div.board
+       [:div.main
+        (for [[wpid items] (group-by (fn [v] (get v "wpid")) doc)]
+          ^{:key wpid} [paragraph items])]]))
 
-(rum/defc cljs-ajax-upload-button []
+(defn upload-comp-for-mount []
   [:div
-   [:hr]
-   [:button {:type "button"
-             :on-click #(cljs-ajax-upload-file "upload-file")}
-    "Upload"]])
-
-(rum/defc upload-comp-for-mount < rum/reactive []
-  [:div
-    (upload-component)
-    (cljs-ajax-upload-button)
-    [:div.download
-     [:a {:href "/edited.docx"} "Download"]]])
+    [upload-component]
+    #_[:div.download
+       [:a {:href "/edited.docx"} "Download"]]
+    [board]])
 

@@ -1,6 +1,6 @@
 (ns project.core
   (:require [accountant.core :as accountant]
-            [rum.core :as rum]
+            [reagent.core :as r]
             [bidi.bidi :as bidi]
             [project.ajax :refer [load-interceptors!]]
             [project.components :as c]
@@ -24,8 +24,8 @@
      (fn [path]
        (boolean (bidi/match-route routes path)))})
   (accountant/dispatch-current!)
-  (rum/mount (c/page) (.getElementById js/document "app"))
-  (rum/mount (upload-comp-for-mount) (.getElementById js/document "download")))
+  (r/render [upload-comp-for-mount]
+            (js/document.getElementById "app")))
 
 
 
